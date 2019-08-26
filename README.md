@@ -1,12 +1,19 @@
 # vue2-bootstrap-table
 
+<p align="center">
+<a href="https://www.npmjs.com/package/vue2-bootstrap-table2"><img src="https://img.shields.io/npm/v/vue2-bootstrap-table2.svg"/> <img src="https://img.shields.io/npm/dm/vue2-bootstrap-table2.svg"/></a> <a href="https://vuejs.org/"><img src="https://img.shields.io/badge/vue-2.6.x-brightgreen.svg"/></a>
+</p>
+
 vue-bootstrap-table is a sortable and searchable table, with Bootstrap styling, for Vue.js.
 
-### VUE 2 : 1.1.8
+### Vue 2.6.0 : 1.2.1 (column slots support, Bootstrap v4.3.1) 
+
+### Vue < 2.6.0: 1.1.13 (Bootstrap v3) 
 
 ### Vue 1 : [jbaysolutions/vue-bootstrap-table](https://github.com/jbaysolutions/vue-bootstrap-table)
 
 ### [Demo](https://jbaysolutions.github.io/vue2-bootstrap-table/examples/01-basic.html)
+### [Changelog](/CHANGELOG.md)
 
 <!--
 ## Table of Contents
@@ -45,20 +52,47 @@ TODO UPDATE CHANGELOG
 
 ## Requirements
 
-* Vue 2.* (tested with 2.3.3)
-* Bootstrap 3 css
+* Vue 2.6.0+ (tested with 2.6.10)
+* Bootstrap 4 css (for Bootstrap 3 css use 1.1.x)
+* Fontawesome 5
 
 
 ## Installation
 
-Install the vue-bootstrap-table [package](https://www.npmjs.org/package/vue2-bootstrap-table2) package using [npm](https://www.npmjs.com/):
+#### [npm](https://www.npmjs.org/package/vue2-bootstrap-table2)
 
-	npm install vue2-bootstrap-table2
+    # install with npm    
+	npm install vue2-bootstrap-table2 --save
+    
+    # install with yarn    
+    yarn add vue2-bootstrap-table2
 
 
-Or add the js script to your html (download from [releases](https://github.com/jbaysolutions/vue2-bootstrap-table/releases)):
- 
-    <script src="vue-bootstrap-table.js"></script>
+Import the library
+
+```javascript
+    import VueBootstrapTable from "vue2-bootstrap-table2";
+```
+
+Add to other Vue components 
+
+ ```javascript
+    export default {
+        components: {
+            VueBootstrapTable: VueBootstrapTable,
+        },
+    // ... data, methods, mounted (), etc.
+    }
+    
+``` 
+
+#### browser
+
+Include the browser-ready bundle (download from [releases](https://github.com/jbaysolutions/vue2-bootstrap-table/releases)) in your page. The components will be automatically available.
+
+```html
+    <script src="vue2-bootstrap-table2.umd.min.js"></script>
+```
 
 
 ## Usage
@@ -79,6 +113,7 @@ Or add the js script to your html (download from [releases](https://github.com/j
                     title:"name",
                     visible: true,
                     editable: true,
+                    filterable: false
                 },
                 {
                     title:"age",
@@ -89,6 +124,7 @@ Or add the js script to your html (download from [releases](https://github.com/j
                     title:"country",
                     visible: true,
                     editable: true,
+                    sortable: false
                 }
             ],
             values: [
@@ -129,6 +165,12 @@ Or add the js script to your html (download from [releases](https://github.com/j
             :filter-case-sensitive=false
 
     >
+        <template v-slot:name="slotProps">
+            {{slotProps.value.name}}
+        </template>
+        <template v-slot:description="slotProps">
+            {{slotProps.value.description}}
+        </template>
     </vue-bootstrap-table>
 ```` 
 
@@ -150,6 +192,15 @@ Or add the js script to your html (download from [releases](https://github.com/j
         values: {
             type: Array,
             required: true,
+        },
+        /**
+         * Enable/disable table row selection, optional, default false.
+         * When true, it will add a checkbox column on the left side and use the value.selected field
+         */
+        selectable: {
+            type: Boolean,
+            required: false,
+            default: true,
         },
         /**
          * Enable/disable table sorting, optional, default true
@@ -209,6 +260,22 @@ Or add the js script to your html (download from [releases](https://github.com/j
             default: 10,
         },
         /**
+         * Setting default order column. Expected name of the column
+         */
+        defaultOrderColumn: {
+            type: String,
+            required: false,
+            default: null,
+        },
+        /**
+         * Setting default order direction. Boolean: true = ASC , false = DESC
+         */
+        defaultOrderDirection: {
+            type: Boolean,
+            required: false,
+            default: true,
+        },
+        /**
          * If loading of table is to be done through ajax, then this object must be set
          */
         ajax: {
@@ -249,6 +316,8 @@ The `columns` array takes object of type:
     columnstyle: String         // Optional: styles to be applied to the Column Header
     cellstyle: String           // Optional: styles to be applied to the Cells of this column
     renderfunction: Function    // Optional: Function that receives as input the column name and entry, and returns an HTML String for drawing cell
+    sortable: Boolean           // Optional, by default it is true!  Used to set particular columns as not sortable, in case the table is sortable itself. - From 1.1.12
+    filterable: Boolean         // Optional, by default it is true!  Used to exclude columns from the filtering process. - From 1.1.13
 }
 ```
 
@@ -270,6 +339,36 @@ Column with Title "Name" , which is visible and editable:
     editable: true,
 }
 ```
+
+#### Column slots example
+
+````html
+
+    <vue-bootstrap-table
+            :columns="columns"
+            :values="values"
+            :show-filter="true"
+            :show-column-picker="true"
+            :sortable="true"
+            :paginated="true"
+            :multi-column-sortable=true
+            :filter-case-sensitive=false
+
+    >
+        <template v-slot:name="slotProps">
+            {{slotProps.value.name}}
+        </template>
+        <template v-slot:description="slotProps">
+            {{slotProps.value.description}}
+        </template>
+    </vue-bootstrap-table>
+```` 
+
+A slot will be created for each column, named with column.name. It has two props available:
+ * "column" - the column object
+ * "value" - the value object for the corresponding row
+
+
 
 #### Render Function Example
 
@@ -328,6 +427,33 @@ var handleRow = function (event, entry) {
 ````
 
 Where event in the `MouseEvent` and `entry` e the complete entry corresponding to the row.
+
+
+### DEFAULT Ordering
+
+To setup your default ordering for the table:
+
+````html
+
+    <vue-bootstrap-table
+            [...]
+            :default-order-column="columnToSortBy"
+            :default-order-direction=true
+    >
+    </vue-bootstrap-table>
+````
+
+On your Vue instance :
+
+````javascript
+data: {
+        columnToSortBy: "name",
+}
+````
+
+This will make the default column order be :  
+ * column: name  
+ * order: ascending
 
 ### AJAX Configuration
 
@@ -487,6 +613,34 @@ If you have a feature request, please add it as an issue or make a pull request.
 
 
 ## Changelog
+
+### 1.1.13
+
+* #19 - Disable filter for specific columns
+
+### 1.1.12
+
+* Enhancement - exposed methods.
+
+### 1.1.11
+
+* Enhancement - #11 - Dynamic Page Size
+* Enhancement - Started creating public methods to simplify stuff.
+
+### 1.1.10.1
+
+* Bug fix - axios problem with passing axios config object
+
+### 1.1.10
+
+* Bug fix - Delegate true and false behaviours leading to not loading data
+* Bug fix - Ajax redundant fetch when not needed
+* Enhancement - #14 - Adding support for default ordering
+* Enhancement - Documentation of code
+
+### 1.1.9
+
+* Bug fix - Support for IE11 (maybe fixed for IE10 aswell)
 
 ### 1.1.8
 
